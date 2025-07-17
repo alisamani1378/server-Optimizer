@@ -1,8 +1,8 @@
 #!/bin/bash
 # =========================================================================
 # Interactive Sysctl Optimizer for VPN/Tunnel Servers
-# Asks the user to choose between TCP-focused or UDP-focused optimizations.
-# Can be hosted on GitHub and run with a single command.
+# Asks the user to choose between TCP-focused or UDP-focused optimizations,
+# confirms the action, and offers to reboot the server.
 # =========================================================================
 
 # --- Check for root privileges ---
@@ -141,6 +141,14 @@ while true; do
     esac
 done
 
+# --- Final Confirmation ---
+echo
+read -p "You are about to modify system kernel settings. Are you sure you want to continue? [y/N]: " final_confirm
+if [[ ! "$final_confirm" =~ ^[Yy]$ ]]; then
+    echo "Operation cancelled."
+    exit 1
+fi
+
 # Create a backup of the original sysctl.conf
 echo "Backing up original /etc/sysctl.conf to /etc/sysctl.conf.bak..."
 cp /etc/sysctl.conf /etc/sysctl.conf.bak.$(date +%F)
@@ -158,5 +166,16 @@ sysctl -p
 
 echo "-------------------------------------------------"
 echo "Optimization complete!"
-echo "A reboot is recommended to ensure all changes, especially BBR, take effect."
 echo "-------------------------------------------------"
+echo
+
+# --- Reboot Confirmation ---
+read -p "A reboot is recommended to ensure all changes take effect. Reboot now? [y/N]: " reboot_confirm
+if [[ "$reboot_confirm" =~ ^[Yy]$ ]]; then
+    echo "Rebooting now..."
+    reboot
+else
+    echo "Please remember to reboot the server later to apply all changes."
+fi
+
+exit 0
